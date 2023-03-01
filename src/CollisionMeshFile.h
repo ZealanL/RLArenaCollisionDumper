@@ -63,7 +63,7 @@ struct CollisionMeshFile {
 		CreateDirectoryA(COLLISION_MESH_BASE_PATH, NULL);
 		CreateDirectoryA(COLLISION_MESH_SOCCAR_PATH, NULL);
 
-		std::ofstream outStream = std::ofstream(filePath);
+		std::ofstream outStream = std::ofstream(filePath, std::ios::binary);
 		
 		assert(outStream.good());
 		assert(tris.size() > 0 && vertices.size() > 0);
@@ -71,8 +71,8 @@ struct CollisionMeshFile {
 		// Write amount of tris and vertices
 		int numTris = tris.size();
 		outStream.write((const char*)&numTris, sizeof(int));
-		int numVerticies = vertices.size();
-		outStream.write((const char*)&numVerticies, sizeof(int));
+		int numVertices = vertices.size();
+		outStream.write((const char*)&numVertices, sizeof(int));
 
 		// Write raw data
 		outStream.write((const char*)tris.data(), tris.size() * sizeof(Triangle));
