@@ -80,6 +80,7 @@ DWORD Memory::FindProcess(wstring name) {
 		}
 	}
 
+	WTSFreeMemory(processInfos);
 	return NULL;
 }
 
