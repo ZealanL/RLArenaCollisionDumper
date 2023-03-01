@@ -396,3 +396,9 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+
+# Extras for RLArenaCollisionDumper
+*.sln
+collision_meshes/
+*.vcxproj.filters
+*.vcxproj.user
