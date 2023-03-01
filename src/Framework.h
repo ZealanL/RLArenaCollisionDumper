@@ -53,19 +53,20 @@ typedef uint8_t byte;
 
 #define LOG(s) {std::cout << std::dec << s << std::endl;}
 
-// TODO: Why am I using macros instead of functions...
-
-#define FATAL_ERROR(s) { \
-	string errorStr = STR("FATAL ERROR: " << s << "\n\nGetLastError(): " << GetLastError()); \
-	MessageBoxA(NULL, errorStr.c_str(), "RLArenaCollisionDumper", MB_ICONERROR); \
-	exit(EXIT_FAILURE); \
+inline void FW_FatalError(string errorStr) {
+	string fullErrorStr = STR("FATAL ERROR: " << errorStr << "\n\nGetLastError(): " << GetLastError());
+	MessageBoxA(NULL, fullErrorStr.c_str(), "RLArenaCollisionDumper", MB_ICONERROR);
+	exit(EXIT_FAILURE);
 }
 
-#define READMEM(handle, address, outputBuffer, readSize) { \
-	SIZE_T numBytesRead; \
-	ReadProcessMemory(handle, (LPCVOID)address, outputBuffer, readSize, &numBytesRead);\
-	if (numBytesRead < readSize) \
-		FATAL_ERROR("Failed to read " << readSize << " byte(s) at " << (void*)address << "."); \
+#define FATAL_ERROR(s) FW_FatalError(STR(s))
+
+inline void FW_ReadMem(HANDLE handle, void* address, void* outputBuffer, DWORD readSize) {
+	SIZE_T numBytesRead;
+	ReadProcessMemory(handle, (LPCVOID)address, outputBuffer, readSize, &numBytesRead);
+	if (numBytesRead < readSize)
+		FATAL_ERROR("Failed to read " << readSize << " byte(s) at " << (void*)address << ".");
 }
+#define READMEM(handle, address, outputBuffer, readSize) FW_ReadMem(handle, (void*)address, (void*)outputBuffer, readSize)
 
 static_assert(sizeof(void*) == 8, "RLArenaCollisionDumper needs to be build as a 64-bit EXE.");
