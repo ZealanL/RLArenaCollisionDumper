@@ -98,9 +98,39 @@ CONTEXT Debugger::GrabContextWithBreakpoint(DWORD pid, void* instructionAddress)
 				} else {
 					LOG("Breakpoint hit, but not the one we set. Ignoring (at " << exceptionAddress << ").");
 				}
+			} else if (exceptionCode == EXCEPTION_ACCESS_VIOLATION || exceptionCode == EXCEPTION_IN_PAGE_ERROR) {
+
+				// Serious memory error occoured, show an error
+
+				std::stringstream errorStream;
+				errorStream << "Rocket League encountered a fatal exception!";
+
+				int exceptionSubType = e.u.Exception.ExceptionRecord.ExceptionInformation[0];
+
+				errorStream << "\n - ";
+
+				switch (exceptionSubType) {
+				case 0:
+					errorStream << "Failed to read memory";
+					break;
+				case 1:
+					errorStream << "Failed to write memory";
+					break;
+				case 8:
+					errorStream << "Failed to execute memory (DEP)";
+					break;
+				default:
+					errorStream << "Unknown access violation";
+				}
+
+				void* exceptionAddress = (void*)e.u.Exception.ExceptionRecord.ExceptionInformation[1];
+				errorStream << " at " << exceptionAddress;
+
+				string errorStr = errorStream.str();
+				FATAL_ERROR(errorStr);
 			}
 		}
-
+		
 		// Continue the debugged process so it doesn't close
 		ContinueDebugEvent(e.dwProcessId,
 			e.dwThreadId,
