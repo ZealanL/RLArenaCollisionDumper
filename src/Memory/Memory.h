@@ -7,7 +7,7 @@ namespace Memory {
 	// Returns offset from module base
 	DWORD PatternScan(void* moduleMemory, DWORD moduleSize, const char* patternStr);
 
-	DWORD FindProcess(wstring name);
+	DWORD FindProcess(const char* name);
 	
 	struct ModuleInfo {
 		void* baseAddress = NULL;

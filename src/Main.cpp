@@ -11,7 +11,7 @@ int main() {
 	// Find Rocket League process by the executable name
 	DWORD pid = NULL;
 	while (pid == NULL) {
-		pid = Memory::FindProcess(L"RocketLeague.exe");
+		pid = Memory::FindProcess("RocketLeague.exe");
 
 		static bool firstNotFound = true;
 		if (!pid && firstNotFound) {

@@ -66,16 +66,16 @@ DWORD Memory::PatternScan(void* moduleMemory, DWORD moduleSize, const char* patt
 	return NULL;
 }
 
-DWORD Memory::FindProcess(wstring name) {
-	WTS_PROCESS_INFO* processInfos = NULL;
+DWORD Memory::FindProcess(const char* name) {
+	WTS_PROCESS_INFOA* processInfos = NULL;
 	DWORD processAmount = 0;
 
-	if (WTSEnumerateProcesses(WTS_CURRENT_SERVER_HANDLE, NULL, 1, &processInfos, &processAmount)) {
+	if (WTSEnumerateProcessesA(WTS_CURRENT_SERVER_HANDLE, NULL, 1, &processInfos, &processAmount)) {
 		for (int i = 0; i < processAmount; i++) {
 
-			WTS_PROCESS_INFO processInfo = processInfos[i];
-
-			if (name == processInfo.pProcessName)
+			WTS_PROCESS_INFOA processInfo = processInfos[i];
+			
+			if (!_stricmp(name, processInfo.pProcessName))
 				return processInfo.ProcessId;
 		}
 	}
