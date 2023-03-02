@@ -16,7 +16,8 @@ void WriteByteToTextSection(HANDLE handle, void* address, byte b) {
 
 	// Restore original page protection
 	DWORD unused;
-	VirtualProtectEx(handle, address, 1, originalProtection, &unused);
+	if (!VirtualProtectEx(handle, address, 1, originalProtection, &unused))
+		FATAL_ERROR("Failed to modify page protection of Rocket League for breakpoint functionality.");
 }
 
 CONTEXT Debugger::GrabContextWithBreakpoint(DWORD pid, void* instructionAddress) {
@@ -128,6 +129,8 @@ CONTEXT Debugger::GrabContextWithBreakpoint(DWORD pid, void* instructionAddress)
 
 				string errorStr = errorStream.str();
 				FATAL_ERROR(errorStr);
+			} else {
+				LOG("Unhandled exception code: " << exceptionCode);
 			}
 		}
 		
