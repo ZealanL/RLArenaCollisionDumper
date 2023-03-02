@@ -1,8 +1,8 @@
 #include "Framework.h"
 
 #include "Memory/Memory.h"
-#include "Debugger/Debugger.h"
 #include "Reader/Reader.h"
+#include "Interceptor/Interceptor.h"
 
 int main() {
 
@@ -52,11 +52,9 @@ int main() {
 	void* functionWithBtWorld = (void*)((uintptr_t)mainModule.baseAddress + functionWithBtWorldOffset);
 
 	LOG("Make sure you are in-game for this next part to work, just load into freeplay.");
-	CONTEXT debugContext = Debugger::GrabContextWithBreakpoint(pid, functionWithBtWorld);
-
 	// Since we grabbed the thread context when the function was executed, the BulletPhysics world pointer will be in RCX
 	// The RCX register is what passes the thisptr of __thiscall functions (also first argument of __fastcall)
-	void* btWorldPtr = (void*)debugContext.Rcx;
+	void* btWorldPtr = Interceptor::InterceptFunctionRCX(pid, functionWithBtWorld);
 
 	if (btWorldPtr == NULL)
 		FATAL_ERROR("BulletPhysics world pointer was NULL! Thread context must have been invalid...");

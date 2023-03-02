@@ -78,16 +78,16 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\Interceptor\Interceptor.h" />
     <ClInclude Include="src\BulletStructs.h" />
     <ClInclude Include="src\Reader\Reader.h" />
     <ClInclude Include="src\CollisionMeshFile.h" />
-    <ClInclude Include="src\Debugger\Debugger.h" />
     <ClInclude Include="src\Memory\Memory.h" />
     <ClInclude Include="src\Framework.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\Interceptor\Interceptor.cpp" />
     <ClCompile Include="src\Reader\Reader.cpp" />
-    <ClCompile Include="src\Debugger\Debugger.cpp" />
     <ClCompile Include="src\Memory\Memory.cpp" />
     <ClCompile Include="src\Main.cpp" />
   </ItemGroup>

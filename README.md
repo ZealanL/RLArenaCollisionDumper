@@ -9,8 +9,9 @@
 ## How it works
  - Locates Rocket League's running process
  - Uses instruction pattern-scanning to find a function that has a necessary BulletPhysics world pointer as an argument
- - Attaches itself as a debugger and places a software breakpoint (`int3`/`0xCC`) on said function
- - Once the function is called, it grabs the BulletPhysics world pointer, and removes the breakpoint allowing Rocket League to resume normally
+ - Allocates 8 bytes of memory inside Rocket League
+ - Patches machine code into that BulletPhysics function to `mov [that memory we allocated], RCX` (`RCX` being the BulletPhysics world pointer argument)
+ - Once the function is called, it grabs the BulletPhysics world pointer from the allocated memory
  - Follows the memory structures of the BulletPhysics library to find the geometry data (triangle index sets and vertices)
  - Saves all of that data to multiple files (one for each mesh)
 
