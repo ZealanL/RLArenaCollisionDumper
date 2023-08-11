@@ -34,6 +34,8 @@ vector<int> ParseStringBytePattern(const char* pattern) {
 }
 
 DWORD Memory::PatternScan(void* moduleMemory, DWORD moduleSize, const char* patternStr) {
+	LOG("Searching for pattern \"" << patternStr << "\"...");
+
 	vector<int> pattern = ParseStringBytePattern(patternStr);
 	if (pattern.empty() || pattern[0] == WILDCARD)
 		return NULL; // Invalid pattern
@@ -57,12 +59,12 @@ DWORD Memory::PatternScan(void* moduleMemory, DWORD moduleSize, const char* patt
 
 		if (found) {
 			DWORD offset = (DWORD)(i - binaryStart);
-			LOG("Found pattern \"" << patternStr << "\" at offset " << (void*)offset << ".");
+			LOG(" > Found at offset " << (void*)offset << ".");
 			return offset;
 		}
 	}
 
-	FATAL_ERROR("Failed to find pattern \"" << patternStr << "\"!");
+	LOG(" > No match.");
 	return NULL;
 }
 

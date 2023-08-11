@@ -41,15 +41,32 @@ int main() {
 	LOG("Copying Rocket League's main binary (size = " << (void*)mainModule.size << ")...");
 	READMEM(rpmHandle, mainModule.baseAddress, binaryMemory, mainModule.size);
 
+	// btDynamicsWorld member functions that are called every tick
+	// We just need to find one of these to do our shellcode injection
+	const char* BTWORLD_FUNC_PATTERNS[] = {
+		"48 89 5C 24 ? 48 89 74 24 ? 57 48 83 EC 70 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 ? 48 8B F1",
+		"40 53 48 83 EC 30 48 8B 01 48 8B D9 0F 29 74 24 ? 0F 28 F1 FF 90 ? ? ? ? 48 8B 03 0F 28 CE 48 8B CB FF 90",
+		"48 89 5C 24 ? 48 89 6C 24 ? 48 89 74 24 ? 57 41 56 41 57 48 83 EC 20 48 63 99",
+		"40 53 57 41 57 48 81 EC ? ? ? ? 0F 29 B4 24"
+	};
+
 	// Find a function that has the BulletPhysics world pointer as the first argument (__thiscall instance pointer)
-	DWORD functionWithBtWorldOffset = 
-		Memory::PatternScan(
-			binaryMemory, 
-			mainModule.size, 
-			"48 89 5C 24 ? 48 89 74 24 ? 57 48 83 EC 70 48 8B 05 ? ? ? ? 48 33 C4 48 89 44 24 ? 48 8B F1"
+	DWORD funcOffset = 0;
+	for (const char* pattern : BTWORLD_FUNC_PATTERNS) {
+		funcOffset = Memory::PatternScan(
+			binaryMemory,
+			mainModule.size,
+			pattern
 		);
 
-	void* functionWithBtWorld = (void*)((uintptr_t)mainModule.baseAddress + functionWithBtWorldOffset);
+		if (funcOffset)
+			break;
+	}
+
+	if (!funcOffset)
+		FATAL_ERROR("Failed to find any of the " << (sizeof(BTWORLD_FUNC_PATTERNS) / sizeof(*BTWORLD_FUNC_PATTERNS)) << " patterns!");
+
+	void* functionWithBtWorld = (void*)((uintptr_t)mainModule.baseAddress + funcOffset);
 
 	LOG("Make sure you are in-game for this next part to work, just load into freeplay.");
 	// Since we grabbed the thread context when the function was executed, the BulletPhysics world pointer will be in RCX
