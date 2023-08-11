@@ -10,7 +10,7 @@ void WriteToTextSection(HANDLE handle, void* address, vector<byte> data) {
 	if (!VirtualProtectEx(handle, address, data.size(), PAGE_READWRITE, &originalProtection))
 		FATAL_ERROR("Failed to modify page protection of Rocket League for breakpoint functionality.");
 
-	LOG("Patching instruction byte at " << address << "...");
+	LOG("Patching instruction bytes at " << address << "...");
 	SIZE_T bytesWritten = 0;
 	WriteProcessMemory(handle, address, data.data(), data.size(), &bytesWritten);
 
@@ -23,6 +23,18 @@ void WriteToTextSection(HANDLE handle, void* address, vector<byte> data) {
 		FATAL_ERROR("Failed to modify page protection of Rocket League for breakpoint functionality.");
 }
 
+void ReadMem(HANDLE handle, void* address, vector<byte>& dataOut, size_t amount) {
+	dataOut.reserve(amount);
+
+	byte* buffer = new byte[amount];
+	SIZE_T bytesRead = 0;
+	ReadProcessMemory(handle, address, buffer, amount, &bytesRead);
+
+	if (bytesRead != amount)
+		FATAL_ERROR("Failed to read memory to Rocket League.");
+
+	dataOut.insert(dataOut.end(), buffer, buffer + amount);
+}
 
 void* Interceptor::InterceptFunctionRCX(DWORD pid, void* funcAddress) {
 	// Special ntdll functions for suspending and resuming a process
@@ -62,6 +74,10 @@ void* Interceptor::InterceptFunctionRCX(DWORD pid, void* funcAddress) {
 	// Freeze Rocket League
 	fnNtSuspendProcess(handle);
 
+	// Create backup bytes to restore with later 
+	std::vector<byte> backupBytes;
+	ReadMem(handle, funcAddress, backupBytes, patchBytes.size());
+
 	// Patch function
 	WriteToTextSection(handle, funcAddress, patchBytes);
 
@@ -77,6 +93,15 @@ void* Interceptor::InterceptFunctionRCX(DWORD pid, void* funcAddress) {
 	}
 
 	LOG("Successfully found at " << caughtRCX);
+
+	// Freeze Rocket League
+	fnNtSuspendProcess(handle);
+
+	// Restore the origial bytes
+	WriteToTextSection(handle, funcAddress, backupBytes);
+
+	// Resume Rocket League
+	fnNtResumeProcess(handle);
 
 	// Done! Return the pointer we found
 	return caughtRCX;
