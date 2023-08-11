@@ -14,6 +14,15 @@ struct __declspec(align(16)) btVector3 {
 
 struct __declspec(align(16)) btMatrix3x3 {
 	btVector3 el[3];
+
+	friend std::ostream& operator <<(std::ostream& stream, btMatrix3x3 mat) {
+		stream << "{" << std::endl;
+		stream << "\t" << mat.el[0] << ", " << std::endl;
+		stream << "\t" << mat.el[1] << ", " << std::endl;
+		stream << "\t" << mat.el[2] << std::endl;
+		stream << "} ";
+		return stream;
+	}
 };
 
 struct __declspec(align(16)) btTransform {
