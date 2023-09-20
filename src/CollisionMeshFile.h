@@ -2,7 +2,6 @@
 #include "Framework.h"
 
 #define COLLISION_MESH_BASE_PATH "./collision_meshes/"
-#define COLLISION_MESH_SOCCAR_PATH COLLISION_MESH_BASE_PATH "soccar/"
 #define COLLISION_MESH_FILE_EXTENSION ".cmf"
 
 // Basic collision mesh file struct I made for this program
@@ -56,12 +55,12 @@ struct CollisionMeshFile {
 		return sum;
 	}
 
-	void WriteToFile(string name) {
-		string filePath = COLLISION_MESH_SOCCAR_PATH + name + COLLISION_MESH_FILE_EXTENSION;
+	void WriteToFile(string path, string name) {
+		string filePath = path + name + COLLISION_MESH_FILE_EXTENSION;
 
 		// Ensure directories exist
 		CreateDirectoryA(COLLISION_MESH_BASE_PATH, NULL);
-		CreateDirectoryA(COLLISION_MESH_SOCCAR_PATH, NULL);
+		CreateDirectoryA(path.c_str(), NULL);
 
 		std::ofstream outStream = std::ofstream(filePath, std::ios::binary);
 		

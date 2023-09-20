@@ -78,15 +78,28 @@ int main() {
 	LOG("BulletPhysics world pointer: " << btWorldPtr);
 
 	// Now that we have the BulletPhysics world, we can finally go through and read each collision mesh
-	vector<CollisionMeshFile> collisionMeshes;
-	Reader::ReadArenaCollisionMeshes(rpmHandle, btWorldPtr, collisionMeshes);
+	int gameMode = GAMEMODE_INVALID;
+	vector<CollisionMeshFile> collisionMeshes = Reader::ReadArenaCollisionMeshes(rpmHandle, btWorldPtr, gameMode);
 	
+	if (gameMode == GAMEMODE_INVALID)
+		FATAL_ERROR("Finished Reader::ReadArenaCollisionMeshes() with no game mode! This should NOT happen!");
+
+	string meshFolderName = GAMEMODE_STRS[gameMode];
+	for (char& c : meshFolderName) {
+		c = tolower(c);
+		if (c == ' ')
+			c == '_';
+	}
+
+	string savePath = COLLISION_MESH_BASE_PATH + meshFolderName + "/";
+
 	// Save all of the meshes to the meshes folder
-	LOG("Saving meshes to \"" << COLLISION_MESH_SOCCAR_PATH << "\"...");
+	LOG("Saving meshes to \"" << savePath << "\"...");
+
 	for (int i = 0; i < collisionMeshes.size(); i++) {
 		string name = "mesh_" + std::to_string(i);;
 		LOG("Saving collision mesh \"" << name << COLLISION_MESH_FILE_EXTENSION << "...");
-		collisionMeshes[i].WriteToFile(name);
+		collisionMeshes[i].WriteToFile(savePath, name);
 	}
 
 	// Clean up

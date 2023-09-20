@@ -53,6 +53,12 @@ typedef uint8_t byte;
 
 #define LOG(s) {std::cout << std::dec << s << std::endl;}
 
+#ifdef _DEBUG
+#define DLOG(s) LOG("[D]: " << s)
+#else
+#define DLOG(s) {}
+#endif
+
 inline void FW_FatalError(string errorStr) {
 	string fullErrorStr = STR("FATAL ERROR: " << errorStr << "\n\nGetLastError(): " << GetLastError());
 	MessageBoxA(NULL, fullErrorStr.c_str(), "RLArenaCollisionDumper", MB_ICONERROR);
@@ -70,3 +76,21 @@ inline void FW_ReadMem(HANDLE handle, void* address, void* outputBuffer, DWORD r
 #define READMEM(handle, address, outputBuffer, readSize) FW_ReadMem(handle, (void*)address, (void*)outputBuffer, readSize)
 
 static_assert(sizeof(void*) == 8, "RLArenaCollisionDumper needs to be build as a 64-bit EXE.");
+
+///////////////////
+
+enum {
+	GAMEMODE_INVALID = -1,
+
+	GAMEMODE_SOCCAR,
+	GAMEMODE_HOOPS,
+
+	GAMEMODE_AMOUNT
+};
+
+constexpr const char* GAMEMODE_STRS[GAMEMODE_AMOUNT] = {
+	"Soccar",
+	"Hoops"
+};
+
+///////////////////

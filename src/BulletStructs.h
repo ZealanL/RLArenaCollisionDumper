@@ -6,6 +6,14 @@
 struct __declspec(align(16)) btVector3 {
 	float x, y, z;
 
+	bool operator==(const btVector3& other) const {
+		return x == other.x && y == other.y && z == other.z;
+	}
+
+	bool operator!=(const btVector3& other) const {
+		return !(*this == other);
+	}
+
 	friend std::ostream& operator <<(std::ostream& stream, btVector3 vec) {
 		stream << "[ " << vec.x << ", " << vec.y << ", " << vec.z << " ]";
 		return stream;
@@ -15,6 +23,14 @@ struct __declspec(align(16)) btVector3 {
 struct __declspec(align(16)) btMatrix3x3 {
 	btVector3 el[3];
 
+	bool operator==(const btMatrix3x3& other) const {
+		return el[0] == other.el[0] && el[1] == other.el[1] && el[2] == other.el[2];
+	}
+
+	bool operator!=(const btMatrix3x3& other) const {
+		return !(*this == other);
+	}
+
 	friend std::ostream& operator <<(std::ostream& stream, btMatrix3x3 mat) {
 		stream << "{" << std::endl;
 		stream << "\t" << mat.el[0] << ", " << std::endl;
@@ -23,6 +39,7 @@ struct __declspec(align(16)) btMatrix3x3 {
 		stream << "} ";
 		return stream;
 	}
+
 };
 
 struct __declspec(align(16)) btTransform {
