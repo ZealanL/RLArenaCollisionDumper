@@ -29,9 +29,12 @@ vector<CollisionMeshFile> Reader::ReadArenaCollisionMeshes(HANDLE rpmHandle, voi
 
 		btCollisionShape collisionShape;
 		READMEM(rpmHandle, collisionObject.collisionShape, &collisionShape, sizeof(btCollisionShape));
+		
+		constexpr int
+			TRIANGLE_MESH_SHAPE_PROXYTYPE = 21,
+			STATIC_PLANE_PROXYTYPE = 28;
 
 		// Check if this collision object's shape is a triangle mesh
-		constexpr int TRIANGLE_MESH_SHAPE_PROXYTYPE = 21;
 		if (collisionShape.shapeType == TRIANGLE_MESH_SHAPE_PROXYTYPE) {
 
 			DLOG(
@@ -41,7 +44,10 @@ vector<CollisionMeshFile> Reader::ReadArenaCollisionMeshes(HANDLE rpmHandle, voi
 			btVector3 pos = collisionObject.worldTransform.origin;
 			DLOG(" > Origin: " << pos);
 
-			
+			btMatrix3x3 basis = collisionObject.worldTransform.basis;
+			DLOG(" > Forward: " << basis.el[0]);
+
+			bool rotated = basis != btMatrix3x3::GetIdentity();
 
 			btTriangleMeshShape triangleMeshShape;
 			READMEM(rpmHandle, collisionObject.collisionShape, &triangleMeshShape, sizeof(btTriangleMeshShape));
@@ -82,6 +88,16 @@ vector<CollisionMeshFile> Reader::ReadArenaCollisionMeshes(HANDLE rpmHandle, voi
 					meshFileOut.vertices.data(),
 					indexedMesh.numVertices * sizeof(CollisionMeshFile::Vertex));
 
+				if (rotated) {
+					DLOG(" > Rotating...");
+					for (auto& vertex : meshFileOut.vertices) {
+						btVector3 rotated = basis.Rotate(btVector3{ vertex.x, vertex.y, vertex.z });
+						vertex.x = rotated.x;
+						vertex.y = rotated.y;
+						vertex.z = rotated.z;
+					}
+				}
+
 				DLOG(" > Offsetting...");
 				meshFileOut.Offset({ pos.x, pos.y, pos.z });
 
@@ -94,6 +110,13 @@ vector<CollisionMeshFile> Reader::ReadArenaCollisionMeshes(HANDLE rpmHandle, voi
 			} else {
 				DLOG(" > No striding mesh interface, ignoring.");
 			}
+		} else if (collisionShape.shapeType == STATIC_PLANE_PROXYTYPE) {
+			DLOG(
+				"Found btStaticPlaneShape at " << collisionObject.collisionShape <<
+				" (collision object = " << collisionObjectPtr << "):");
+
+			btVector3 pos = collisionObject.worldTransform.origin;
+			DLOG(" > Origin (UU): " << pos * 50);
 		}
 	}
 		

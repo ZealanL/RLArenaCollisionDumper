@@ -18,6 +18,14 @@ struct __declspec(align(16)) btVector3 {
 		stream << "[ " << vec.x << ", " << vec.y << ", " << vec.z << " ]";
 		return stream;
 	}
+
+	btVector3 operator +(const btVector3& other) const {
+		return btVector3{ x + other.x, y + other.y, z + other.z };
+	}
+
+	btVector3 operator *(float f) const {
+		return btVector3{ x * f, y * f, z * f };
+	}
 };
 
 struct __declspec(align(16)) btMatrix3x3 {
@@ -40,6 +48,21 @@ struct __declspec(align(16)) btMatrix3x3 {
 		return stream;
 	}
 
+	static btMatrix3x3 GetIdentity() {
+		constexpr static btMatrix3x3 IDENTITY = {
+			btVector3{1, 0, 0},
+			btVector3{0, 1, 0},
+			btVector3{0, 0, 1}
+		};
+		return IDENTITY;
+	}
+
+	btVector3 Rotate(const btVector3& vec) {
+		return
+			el[0] * vec.x +
+			el[1] * vec.y +
+			el[2] * vec.z;
+	}
 };
 
 struct __declspec(align(16)) btTransform {
