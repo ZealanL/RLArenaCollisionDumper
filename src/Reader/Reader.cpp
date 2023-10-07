@@ -29,10 +29,6 @@ vector<CollisionMeshFile> Reader::ReadArenaCollisionMeshes(HANDLE rpmHandle, voi
 
 		btCollisionShape collisionShape;
 		READMEM(rpmHandle, collisionObject.collisionShape, &collisionShape, sizeof(btCollisionShape));
-		
-		constexpr int
-			TRIANGLE_MESH_SHAPE_PROXYTYPE = 21,
-			STATIC_PLANE_PROXYTYPE = 28;
 
 		// Check if this collision object's shape is a triangle mesh
 		if (collisionShape.shapeType == TRIANGLE_MESH_SHAPE_PROXYTYPE) {
