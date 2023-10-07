@@ -141,12 +141,17 @@ vector<CollisionMeshFile> Reader::ReadArenaCollisionMeshes(HANDLE rpmHandle, voi
 	} else {
 		std::stringstream expectedMeshCountsStream;
 		for (int i = 0; i < GAMEMODE_AMOUNT; i++) {
-			expectedMeshCountsStream << GAMEMODE_MESH_AMOUNTS[i];
 			if (i > 0) {
-				expectedMeshCountsStream << ", ";
+				if (GAMEMODE_AMOUNT > 2)
+					expectedMeshCountsStream << ',';
+
+				expectedMeshCountsStream << ' ';
+
 				if (i == GAMEMODE_AMOUNT - 1)
-					expectedMeshCountsStream << " or ";
+					expectedMeshCountsStream << "or ";
 			}
+
+			expectedMeshCountsStream << GAMEMODE_MESH_AMOUNTS[i];
 		}
 
 		string expectedMeshCounts = expectedMeshCountsStream.str();
