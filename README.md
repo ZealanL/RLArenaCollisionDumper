@@ -20,4 +20,3 @@
 
 ## Requirements
  - Rocket League running on Windows
- - Ability to build .vcxproj

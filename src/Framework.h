@@ -21,6 +21,7 @@
 #include <functional>
 #include <chrono>
 
+// Include Windows API, used for reading the memory of Rocket League
 #include <Windows.h>
 
 // Remove need for std namespace scope for very common datatypes
