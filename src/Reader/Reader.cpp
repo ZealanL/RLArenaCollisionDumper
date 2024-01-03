@@ -34,11 +34,11 @@ vector<CollisionMeshFile> Reader::ReadArenaCollisionMeshes(HANDLE rpmHandle, voi
 		if (collisionShape.shapeType == TRIANGLE_MESH_SHAPE_PROXYTYPE) {
 
 			DLOG(
-				"Found btTriangleMeshShape at " << collisionObject.collisionShape << 
+				"Found btTriangleMeshShape at " << collisionObject.collisionShape <<
 				" (collision object = " << collisionObjectPtr << "):");
 
 			btVector3 pos = collisionObject.worldTransform.origin;
-			DLOG(" > Origin: " << pos);
+			DLOG(" > Origin (UU): " << pos * 50);
 
 			btMatrix3x3 basis = collisionObject.worldTransform.basis;
 			DLOG(" > Forward: " << basis.el[0]);
@@ -113,9 +113,11 @@ vector<CollisionMeshFile> Reader::ReadArenaCollisionMeshes(HANDLE rpmHandle, voi
 
 			btVector3 pos = collisionObject.worldTransform.origin;
 			DLOG(" > Origin (UU): " << pos * 50);
+
+			DLOG(" > Basis: " << collisionObject.worldTransform.basis);
 		}
 	}
-		
+
 	gameModeOut = GAMEMODE_INVALID;
 
 	LOG("Meshes found: " << meshFiles.size());
@@ -124,7 +126,7 @@ vector<CollisionMeshFile> Reader::ReadArenaCollisionMeshes(HANDLE rpmHandle, voi
 		16, // Soccar
 		12 // Hoops
 	};
-	
+
 	for (int i = 0; i < GAMEMODE_AMOUNT; i++) {
 		if (meshFiles.size() == GAMEMODE_MESH_AMOUNTS[i]) {
 			gameModeOut = i;
