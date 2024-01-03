@@ -1,5 +1,7 @@
 #pragma once
 
+#define RLACD_VERSION "1.0.0"
+
 #include <stdint.h>
 #include <iostream>
 #include <string>

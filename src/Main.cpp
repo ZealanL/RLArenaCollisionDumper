@@ -6,6 +6,8 @@
 
 int main() {
 
+	LOG("=== RLArenaCollisionDumper v" << RLACD_VERSION << " ===");
+
 	LOG("Looking for Rocket League...");
 
 	// Find Rocket League process by the executable name
@@ -28,7 +30,7 @@ int main() {
 	Memory::ModuleInfo mainModule = Memory::GetProcessMainModule(pid);
 	
 	// Open a read handle
-	HANDLE rpmHandle = OpenProcess(PROCESS_VM_READ, false, pid);
+	HANDLE rpmHandle = OpenProcess(PROCESS_ALL_ACCESS, false, pid);
 	if (!rpmHandle)
 		FATAL_ERROR("Failed to open a read-access handle to Rocket League, try running as Administrator.");
 
