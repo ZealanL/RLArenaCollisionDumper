@@ -84,31 +84,33 @@ static_assert(sizeof(btAlignedObjectArray) == 0x20, "btAlignedObjectArray size m
 //////////////////////////////////////////////
 
 struct btDynamicsWorld {
-	char pad_0[0x8]; // vtable
+	void* vtable;
 	btAlignedObjectArray collisionObjects;
 };
 
 struct btCollisionObject {
-	char pad_0[0x8]; // vtable
+	void* vtable;
 	btTransform worldTransform;
 	char pad_50[0x80];
 	struct btCollisionShape* collisionShape;
 };
 
 struct btCollisionShape {
-	char pad_0[0x8];
+	void* vtable;
 	int shapeType;
 };
 
 struct btTriangleMeshShape {
-	char pad_0[0x20];
+	void* vtable;
+	char pad_08[0x18];
 	btVector3 localAabbMin;
 	btVector3 localAabbMax;
 	struct btTriangleIndexVertexArray* stridingMeshInterface;
 };
 
 struct btTriangleIndexVertexArray {
-	char pad_0[0x20];
+	void* vtable;
+	char pad_08[0x18];
 	btAlignedObjectArray indexedMeshes;
 };
 
