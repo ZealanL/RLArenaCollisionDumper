@@ -154,7 +154,10 @@ vector<CollisionMeshFile> Reader::ReadArenaCollisionMeshes(HANDLE rpmHandle, voi
 
 		string expectedMeshCounts = expectedMeshCountsStream.str();
 
-		FATAL_ERROR("Unknown number of meshes: " << meshFiles.size() << "\nExpected " << expectedMeshCounts << " meshes.");
+		FATAL_ERROR(
+			"Unknown number of meshes: " << meshFiles.size() << "\nExpected " << expectedMeshCounts << " meshes.\n" <<
+			"Make sure you are in freeplay."
+		);
 	}
 
 	return meshFiles;
