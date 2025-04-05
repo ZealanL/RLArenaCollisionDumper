@@ -4,9 +4,18 @@
 #include "Reader/Reader.h"
 #include "Interceptor/Interceptor.h"
 
-int main() {
+int main(int argc, char* argv[]) {
 
 	LOG("=== RLArenaCollisionDumper v" << RLACD_VERSION << " ===");
+
+	bool customMapMode = false;
+	for (int i = 1; i < argc; i++) {
+		std::string arg = argv[i];
+		if (arg == "-custommap" && !customMapMode) {
+			LOG("Using CUSTOM MAP MODE, meshes will be dumped regardless of count and placed in a \"/" << GAMEMODE_STRS[GAMEMODE_CUSTOM] << "/\" subfolder");
+			customMapMode = true;
+		}
+	}
 
 	LOG("Looking for Rocket League...");
 
@@ -71,6 +80,7 @@ int main() {
 	void* functionWithBtWorld = (void*)((uintptr_t)mainModule.baseAddress + funcOffset);
 
 	LOG("Make sure you are in-game for this next part to work, just load into freeplay.");
+
 	// Since we grabbed the thread context when the function was executed, the BulletPhysics world pointer will be in RCX
 	// The RCX register is what passes the thisptr of __thiscall functions (also first argument of __fastcall)
 	void* btWorldPtr = Interceptor::InterceptFunctionRCX(pid, functionWithBtWorld);
@@ -81,7 +91,7 @@ int main() {
 
 	// Now that we have the BulletPhysics world, we can finally go through and read each collision mesh
 	int gameMode = GAMEMODE_INVALID;
-	vector<CollisionMeshFile> collisionMeshes = Reader::ReadArenaCollisionMeshes(rpmHandle, btWorldPtr, gameMode);
+	vector<CollisionMeshFile> collisionMeshes = Reader::ReadArenaCollisionMeshes(rpmHandle, btWorldPtr, gameMode, customMapMode);
 	
 	if (gameMode == GAMEMODE_INVALID)
 		FATAL_ERROR("Finished Reader::ReadArenaCollisionMeshes() with no game mode! This should NOT happen!");
@@ -90,7 +100,7 @@ int main() {
 	for (char& c : meshFolderName) {
 		c = tolower(c);
 		if (c == ' ')
-			c == '_';
+			c = '_';
 	}
 
 	string savePath = COLLISION_MESH_BASE_PATH + meshFolderName + "/";

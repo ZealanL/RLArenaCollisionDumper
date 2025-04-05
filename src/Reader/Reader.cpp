@@ -2,7 +2,7 @@
 
 #include "../BulletStructs.h"
 
-vector<CollisionMeshFile> Reader::ReadArenaCollisionMeshes(HANDLE rpmHandle, void* btWorldPtr, int& gameModeOut) {
+vector<CollisionMeshFile> Reader::ReadArenaCollisionMeshes(HANDLE rpmHandle, void* btWorldPtr, int& gameModeOut, bool customMap) {
 
 	vector<CollisionMeshFile> meshFiles;
 
@@ -13,6 +13,8 @@ vector<CollisionMeshFile> Reader::ReadArenaCollisionMeshes(HANDLE rpmHandle, voi
 	READMEM(rpmHandle, btWorldPtr, &bulletWorld, sizeof(btDynamicsWorld));
 
 	LOG("Collision object amount: " << bulletWorld.collisionObjects.size);
+
+	int numSkipped = 0;
 
 	for (int i = 0; i < bulletWorld.collisionObjects.size; i++) {
 		void* collisionObjectPtr;
@@ -33,6 +35,27 @@ vector<CollisionMeshFile> Reader::ReadArenaCollisionMeshes(HANDLE rpmHandle, voi
 		// Check if this collision object's shape is a triangle mesh
 		if (collisionShape.shapeType == TRIANGLE_MESH_SHAPE_PROXYTYPE) {
 
+			btTriangleMeshShape triangleMeshShape;
+			READMEM(rpmHandle, collisionObject.collisionShape, &triangleMeshShape, sizeof(btTriangleMeshShape));
+
+			// No mesh interface, SKIP!
+			if (!triangleMeshShape.stridingMeshInterface) {
+				numSkipped++;
+				continue;
+			}
+
+			btTriangleIndexVertexArray stridingIterface;
+			READMEM(rpmHandle, triangleMeshShape.stridingMeshInterface, &stridingIterface, sizeof(btTriangleIndexVertexArray));
+
+			btIndexedMesh indexedMesh;
+			READMEM(rpmHandle, stridingIterface.indexedMeshes.data, &indexedMesh, sizeof(btIndexedMesh));
+
+			if (indexedMesh.numVertices <= 5 && !customMap) {
+				// Tiny dropshot tile piece or plane, SKIP!
+				numSkipped++;
+				continue;
+			}
+
 			DLOG(
 				"Found btTriangleMeshShape at " << collisionObject.collisionShape <<
 				" (collision object = " << collisionObjectPtr << "):");
@@ -45,67 +68,55 @@ vector<CollisionMeshFile> Reader::ReadArenaCollisionMeshes(HANDLE rpmHandle, voi
 
 			bool rotated = basis != btMatrix3x3::GetIdentity();
 
-			btTriangleMeshShape triangleMeshShape;
-			READMEM(rpmHandle, collisionObject.collisionShape, &triangleMeshShape, sizeof(btTriangleMeshShape));
-
 			DLOG(" > AABB min: " << triangleMeshShape.localAabbMin);
 			DLOG(" > AABB max: " << triangleMeshShape.localAabbMax);
 
-			// The stridingMeshInterface field will contain the vertex and face data we need
-			if (triangleMeshShape.stridingMeshInterface) {
-				DLOG(" > Striding mesh interface: " << triangleMeshShape.stridingMeshInterface);
+			DLOG(" > Striding mesh interface: " << triangleMeshShape.stridingMeshInterface);
 
-				btTriangleIndexVertexArray stridingIterface;
-				READMEM(rpmHandle, triangleMeshShape.stridingMeshInterface, &stridingIterface, sizeof(btTriangleIndexVertexArray));
+				
+			DLOG(" > Indexed mesh at " << stridingIterface.indexedMeshes.data);
+			DLOG(" > Number of vertices: " << indexedMesh.numVertices);
+			DLOG(" > Number of triangle faces: " << indexedMesh.numTriangles);
 
-				btIndexedMesh indexedMesh;
-				READMEM(rpmHandle, stridingIterface.indexedMeshes.data, &indexedMesh, sizeof(btIndexedMesh));
-				DLOG(" > Indexed mesh at " << stridingIterface.indexedMeshes.data);
-				DLOG(" > Number of vertices: " << indexedMesh.numVertices);
-				DLOG(" > Number of triangle faces: " << indexedMesh.numTriangles);
+			constexpr int
+				INDEXES_PER_TRI = 3,
+				FLOATS_PER_VERTEX = 3;
 
-				constexpr int
-					INDEXES_PER_TRI = 3,
-					FLOATS_PER_VERTEX = 3;
+			CollisionMeshFile meshFileOut;
 
-				CollisionMeshFile meshFileOut;
+			DLOG(" > Reading triangles...");
+			meshFileOut.tris.resize(indexedMesh.numTriangles);
+			READMEM(rpmHandle,
+				indexedMesh.triangleIndexData,
+				meshFileOut.tris.data(),
+				indexedMesh.numTriangles * sizeof(CollisionMeshFile::Triangle));
 
-				DLOG(" > Reading triangles...");
-				meshFileOut.tris.resize(indexedMesh.numTriangles);
-				READMEM(rpmHandle,
-					indexedMesh.triangleIndexData,
-					meshFileOut.tris.data(),
-					indexedMesh.numTriangles * sizeof(CollisionMeshFile::Triangle));
+			DLOG(" > Reading vertices...");
+			meshFileOut.vertices.resize(indexedMesh.numVertices);
+			READMEM(rpmHandle,
+				indexedMesh.vertexData,
+				meshFileOut.vertices.data(),
+				indexedMesh.numVertices * sizeof(CollisionMeshFile::Vertex));
 
-				DLOG(" > Reading vertices...");
-				meshFileOut.vertices.resize(indexedMesh.numVertices);
-				READMEM(rpmHandle,
-					indexedMesh.vertexData,
-					meshFileOut.vertices.data(),
-					indexedMesh.numVertices * sizeof(CollisionMeshFile::Vertex));
-
-				if (rotated) {
-					DLOG(" > Rotating...");
-					for (auto& vertex : meshFileOut.vertices) {
-						btVector3 rotated = basis.Rotate(btVector3{ vertex.x, vertex.y, vertex.z });
-						vertex.x = rotated.x;
-						vertex.y = rotated.y;
-						vertex.z = rotated.z;
-					}
+			if (rotated) {
+				DLOG(" > Rotating...");
+				for (auto& vertex : meshFileOut.vertices) {
+					btVector3 rotated = basis.Rotate(btVector3{ vertex.x, vertex.y, vertex.z });
+					vertex.x = rotated.x;
+					vertex.y = rotated.y;
+					vertex.z = rotated.z;
 				}
-
-				DLOG(" > Offsetting...");
-				meshFileOut.Offset({ pos.x, pos.y, pos.z });
-
-				DLOG(" > Center of geometry (average vertex): " << meshFileOut.GetCenterOfGeometry());
-
-				DLOG(" > Done.");
-
-				meshFiles.push_back(meshFileOut);
-
-			} else {
-				DLOG(" > No striding mesh interface, ignoring.");
 			}
+
+			DLOG(" > Offsetting...");
+			meshFileOut.Offset({ pos.x, pos.y, pos.z });
+
+			DLOG(" > Center of geometry (average vertex): " << meshFileOut.GetCenterOfGeometry());
+
+			DLOG(" > Done.");
+
+			meshFiles.push_back(meshFileOut);
+
 		} else if (collisionShape.shapeType == STATIC_PLANE_PROXYTYPE) {
 			DLOG(
 				"Found btStaticPlaneShape at " << collisionObject.collisionShape <<
@@ -120,44 +131,50 @@ vector<CollisionMeshFile> Reader::ReadArenaCollisionMeshes(HANDLE rpmHandle, voi
 
 	gameModeOut = GAMEMODE_INVALID;
 
-	LOG("Meshes found: " << meshFiles.size());
+	LOG("Meshes found: " << meshFiles.size() << " (skipped " << numSkipped << ")");
 
-	constexpr int GAMEMODE_MESH_AMOUNTS[GAMEMODE_AMOUNT] = {
-		16, // Soccar
-		12 // Hoops
-	};
-
-	for (int i = 0; i < GAMEMODE_AMOUNT; i++) {
-		if (meshFiles.size() == GAMEMODE_MESH_AMOUNTS[i]) {
-			gameModeOut = i;
-			break;
-		}
-	}
-
-	if (gameModeOut != GAMEMODE_INVALID) {
-		LOG("Detected game mode: " << GAMEMODE_STRS[gameModeOut]);
+	if (customMap) {
+		gameModeOut = GAMEMODE_CUSTOM;
 	} else {
-		std::stringstream expectedMeshCountsStream;
+		constexpr int GAMEMODE_MESH_AMOUNTS[GAMEMODE_AMOUNT] = {
+			16, // Soccar
+			12, // Hoops
+			2, // Dropshot
+			0
+		};
+
 		for (int i = 0; i < GAMEMODE_AMOUNT; i++) {
-			if (i > 0) {
-				if (GAMEMODE_AMOUNT > 2)
-					expectedMeshCountsStream << ',';
+			if (meshFiles.size() == GAMEMODE_MESH_AMOUNTS[i]) {
+				gameModeOut = i;
+				break;
+			}
+		}
 
-				expectedMeshCountsStream << ' ';
+		if (gameModeOut != GAMEMODE_INVALID) {
+			LOG("Detected game mode: " << GAMEMODE_STRS[gameModeOut]);
+		} else {
+			std::stringstream expectedMeshCountsStream;
+			for (int i = 0; i < GAMEMODE_AMOUNT; i++) {
+				if (i > 0) {
+					if (GAMEMODE_AMOUNT > 2)
+						expectedMeshCountsStream << ',';
 
-				if (i == GAMEMODE_AMOUNT - 1)
-					expectedMeshCountsStream << "or ";
+					expectedMeshCountsStream << ' ';
+
+					if (i == GAMEMODE_AMOUNT - 1)
+						expectedMeshCountsStream << "or ";
+				}
+
+				expectedMeshCountsStream << GAMEMODE_MESH_AMOUNTS[i];
 			}
 
-			expectedMeshCountsStream << GAMEMODE_MESH_AMOUNTS[i];
+			string expectedMeshCounts = expectedMeshCountsStream.str();
+
+			FATAL_ERROR(
+				"Unknown number of meshes: " << meshFiles.size() << "\nExpected " << expectedMeshCounts << " meshes.\n" <<
+				"Make sure you are in freeplay."
+			);
 		}
-
-		string expectedMeshCounts = expectedMeshCountsStream.str();
-
-		FATAL_ERROR(
-			"Unknown number of meshes: " << meshFiles.size() << "\nExpected " << expectedMeshCounts << " meshes.\n" <<
-			"Make sure you are in freeplay."
-		);
 	}
 
 	return meshFiles;

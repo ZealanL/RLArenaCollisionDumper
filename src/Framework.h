@@ -1,6 +1,6 @@
 #pragma once
 
-#define RLACD_VERSION "1.0.0"
+#define RLACD_VERSION "1.1.0"
 
 #include <stdint.h>
 #include <iostream>
@@ -87,13 +87,17 @@ enum {
 
 	GAMEMODE_SOCCAR,
 	GAMEMODE_HOOPS,
+	GAMEMODE_DROPSHOT,
+	GAMEMODE_CUSTOM,
 
 	GAMEMODE_AMOUNT
 };
 
 constexpr const char* GAMEMODE_STRS[GAMEMODE_AMOUNT] = {
 	"Soccar",
-	"Hoops"
+	"Hoops",
+	"Dropshot",
+	"Custom Map"
 };
 
 ///////////////////

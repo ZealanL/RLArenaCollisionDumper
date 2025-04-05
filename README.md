@@ -5,6 +5,10 @@
  - Download the prebuilt executable from the latest release (or build it yourself)
  - Start Rocket League, go into free play, then run the RLArenaCollisionDumper executable
  - All arena collision geometry will be written to `./collision-meshes/`
+ 
+### Custom Map Usage
+ - To make the dumper work on a custom map, add `-custommap` to the command line. 
+   *Note that non-triangle meshes and objects will not be dumped, which some maps rely on.*
 
 ## How it works
  - Locates Rocket League's running process
